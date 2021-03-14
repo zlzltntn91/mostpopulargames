@@ -7,6 +7,7 @@ import kr.co.soo.mostpopulargames.api.TwitchApiCallImpl;
 import kr.co.soo.mostpopulargames.api.TwitchApiUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
+import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -53,9 +54,10 @@ public class TwitchApiConnectTest {
 	}
 
 	@Test
-	public void 현재한국어로방송중인채널조회_50개() {
+	public void 현재한국어로방송중인채널조회_50개() throws JsonProcessingException {
 		StreamsDto responseDto = api.searchLiveKoreanStreams(50);
 		assertThat(responseDto.getData().size()).isEqualTo(50);
+		log.info(mapper.writeValueAsString(responseDto));
 	}
 
 	@Test
@@ -100,15 +102,13 @@ public class TwitchApiConnectTest {
 
 		// 게임명으로 그룹핑
 		Map<String, List<StreamsDto.StreamerDto>> result = streamsDto.getData().stream()
-				.map(v ->  {
-					if(v.getGame_name().length()==0){
+				.map(v -> {
+					if (v.getGame_name().length() == 0) {
 						StreamsDto.StreamerDto t = new StreamsDto.StreamerDto();
 						t.setGame_name("게임명 알 수 없음");
 						return t;
 					}
 					return v;
-
-
 				})
 				.collect(Collectors.groupingBy(StreamsDto.StreamerDto::getGame_name));
 
@@ -117,7 +117,7 @@ public class TwitchApiConnectTest {
 
 		// 엔트리를 맵 gameName=streamerSize 로 변환
 		Map<String, Integer> countStreams = new HashMap<>();
-		for(Map.Entry<String, List<StreamsDto.StreamerDto>> entry : entrySet){
+		for (Map.Entry<String, List<StreamsDto.StreamerDto>> entry : entrySet) {
 			countStreams.put(entry.getKey(), entry.getValue().size());
 		}
 		// 스트리머가 많은순으로 정렬
@@ -155,8 +155,14 @@ public class TwitchApiConnectTest {
 		StreamsDto responseDto = api.searchLiveKoreanStreams(50);
 		assertThat(responseDto.getData().size()).isEqualTo(50);
 
-		String firstStreamsGameId = responseDto.getData().get(0).getGame_id();
+		String firstStreamsGameId = responseDto.getData().get(1).getGame_id();
 		ResponseEntity<String> result = twitchApiUtil.getResponseEntity(API_URL + "/games?id=" + firstStreamsGameId, String.class);
 		log.info(result.getBody());
+	}
+
+	@Test
+	public void 풍월량() throws JsonProcessingException {
+		StreamsDto dto = api.searchLiveKoreanStreams();
+		log.info("풍월량: {}", mapper.writeValueAsString(dto.getData().stream().filter(streamer -> streamer.getUser_name().equals("풍월량")).collect(Collectors.toList())));
 	}
 }
