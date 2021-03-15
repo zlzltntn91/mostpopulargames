@@ -1,30 +1,48 @@
 package kr.co.soo.mostpopulargames.web;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 @Slf4j
 @RunWith(SpringRunner.class)
-@WebMvcTest(TwitchController.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TwitchControllerTest {
 
 	@Autowired
-	MockMvc mvc;
+	private TestRestTemplate restTemplate;
 
 	@Test
-	@Ignore
-	public void 한국어라이브스트림조회() throws Exception {
-		mvc.perform(MockMvcRequestBuilders.get("/livestreams/ko"))
-				.andExpect(status().isOk());
+	public void 라이브스트림조회_기본ko_20() {
+		ResponseEntity<StreamsDto> result = restTemplate.getForEntity("/livestreams", StreamsDto.class);
+		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		assertThat(result.getBody().getData().size())
+				.isEqualTo(20);
+
+		assertThat(result.getBody().getData().stream()
+						   .filter(v -> "ko".equals(v.getLanguage()))
+						   .count())
+				.isEqualTo(20);
+
+		assertThat(result.getBody().getData().stream()
+						   .filter(v -> !"ko".equals(v.getLanguage()))
+						   .count())
+				.isEqualTo(0);
 	}
 
+	@Test(expected = NullPointerException.class)
+	public void us라이브스트림조회_expected_NPP() {
+		ResponseEntity<StreamsDto> result = restTemplate.getForEntity("/livestreams/us", StreamsDto.class);
+		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(result.getBody().getData().size()).isEqualTo(0);
+	}
 }

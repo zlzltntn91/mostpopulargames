@@ -27,7 +27,7 @@ public class HelloControllerTest {
 	}
 
 	@Test
-	public void 리스폰스디티오() throws Exception {
+	public void helloDto_name_amount_jsonPath() throws Exception {
 		String name = "김은수";
 		int amount = 3000;
 		mvc.perform(get("/hello/dto")
@@ -35,6 +35,6 @@ public class HelloControllerTest {
 						.param("amount", String.valueOf(3000))) // String만 허용
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.name", is(name)))
-			.andExpect(jsonPath("$.amount", is(amount))); // $를 기준을 ㅗ필드명 명시
+			.andExpect(jsonPath("$.amount", is(amount))); // $를 기준을 필드명 명시
 	}
 }

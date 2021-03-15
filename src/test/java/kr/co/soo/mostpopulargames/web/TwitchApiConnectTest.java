@@ -2,16 +2,13 @@ package kr.co.soo.mostpopulargames.web;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import kr.co.soo.mostpopulargames.api.TwitchApiCall;
 import kr.co.soo.mostpopulargames.api.TwitchApiCallImpl;
 import kr.co.soo.mostpopulargames.api.TwitchApiUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
@@ -27,6 +24,9 @@ public class TwitchApiConnectTest {
 	private ObjectMapper mapper = new ObjectMapper();
 	private TwitchApiCall api = new TwitchApiCallImpl();
 
+	{
+		mapper.enable(SerializationFeature.INDENT_OUTPUT);
+	}
 
 	@Test
 	public void 토큰정보조회() {
@@ -38,62 +38,60 @@ public class TwitchApiConnectTest {
 				HttpMethod.GET,
 				httpEntity,
 				String.class);
+		assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
 		log.debug(responseEntity.getBody());
 	}
 
 	@Test
 	public void 현재한국어로방송중인채널조회_20개() {
 		StreamsDto responseDto = api.searchLiveKoreanStreams();
-
 		assertThat(responseDto.getData().size()).isEqualTo(20);
-		assertThat(responseDto.getData().stream()
-				.filter(v -> "ko".equalsIgnoreCase(v.getLanguage()))
-				.collect(Collectors.toList())
-				.size())
-				.isEqualTo(20);
 	}
 
 	@Test
 	public void 현재한국어로방송중인채널조회_50개() throws JsonProcessingException {
 		StreamsDto responseDto = api.searchLiveKoreanStreams(50);
 		assertThat(responseDto.getData().size()).isEqualTo(50);
-		log.info(mapper.writeValueAsString(responseDto));
 	}
 
 	@Test
-	public void 현재한국어로방송중인채널_게임명으로그룹() throws JsonProcessingException {
-		StreamsDto streamsDto = api.searchLiveKoreanStreams(100);
-		Map<String, List<StreamsDto.StreamerDto>> result = streamsDto.getData().stream()
-				.collect(Collectors.groupingBy(StreamsDto.StreamerDto::getGame_name));
+	public void 현재한국어로방송중인채널_게임명으로그룹_100개중() throws JsonProcessingException {
+		StreamsDto apiResult = api.searchLiveKoreanStreams(100);
+		assertThat(apiResult.getData().size()).isEqualTo(100);
 
-		log.info(mapper.writeValueAsString(result));
+		Map<String, List<StreamsDto.StreamerDto>> groupByGameName = apiResult.getData().stream()
+				.collect(Collectors.groupingBy(StreamsDto.StreamerDto::getGame_name));
+		assertThat(groupByGameName.keySet().size()).isNotZero();
+
+		int totalStreamerSize = groupByGameName.entrySet().stream()
+				.mapToInt(v -> v.getValue().size())
+				.sum();
+		assertThat(totalStreamerSize).isEqualTo(apiResult.getData().size());
+
+		for (Map.Entry<String, List<StreamsDto.StreamerDto>> streamsEntrySet : groupByGameName.entrySet()) {
+			for (StreamsDto.StreamerDto streamer : streamsEntrySet.getValue()) {
+				assertThat(streamsEntrySet.getKey()).isEqualTo((streamer.getGame_name()));
+			}
+		}
 	}
 
 	@Test
 	public void 현재한국어로방송중인채널_게임명으로그룹핑_시청자가많은순() throws JsonProcessingException {
-		/**
-		 * 	Comparator<Map.Entry<String, Integer>> totalViewerCountDesc = (game1, game2) -> {
-		 * 		return game1.getValue() - game2.getValue();
-		 *  };
-		 *
-		 *  Comparator<Map.Entry<String, Integer>> totalViewerCountDesc = (game1, game2) -> game1.getValue() - game2.getValue();
-		 *
-		 *  Comparator<Map.Entry<String, Integer>> totalViewerCountDesc = Comparator.comparingInt(Map.Entry::getValue);
-		 */
-
 		StreamsDto streamsDto = api.searchLiveKoreanStreams(100);
+		long totalViewer = streamsDto.getData().stream().collect(Collectors.summingInt(StreamsDto.StreamerDto::getViewer_count));
+		assertThat(totalViewer).isNotZero();
 
 		Map<String, Integer> groupingByGameName = streamsDto.getData().stream()
-				.collect(Collectors.groupingBy(StreamsDto.StreamerDto::getGame_name,
-						Collectors.summingInt(StreamsDto.StreamerDto::getViewer_count)));
+				.collect(Collectors.groupingBy(StreamsDto.StreamerDto::getGame_name, Collectors.summingInt(StreamsDto.StreamerDto::getViewer_count)));
+
+		long groupTotalViewerCount = groupingByGameName.entrySet().stream().collect(Collectors.summingInt(v -> v.getValue()));
+		assertThat(totalViewer).isEqualTo(groupTotalViewerCount);
 
 		Comparator<Map.Entry<String, Integer>> totalViewerComparator = Comparator.comparingInt(Map.Entry::getValue);
 
 		List<Map.Entry<String, Integer>> gameList_descTotalViewer = groupingByGameName.entrySet().stream()
 				.sorted(totalViewerComparator.reversed())
 				.collect(Collectors.toList());
-
-		log.info(mapper.writeValueAsString(gameList_descTotalViewer));
 	}
 
 	@Test
@@ -128,27 +126,6 @@ public class TwitchApiConnectTest {
 		log.info(mapper.writeValueAsString(resultSet));
 	}
 
-	/**
-	 * 첫번째 인자가 두번쨰 인자보다
-	 * 작다면 음수
-	 * 같다면 0
-	 * 크다면 양수
-	 *
-	 * @throws JsonProcessingException
-	 */
-	@Test
-	public void compratorTest() throws JsonProcessingException {
-
-		Comparator<StreamsDto.StreamerDto> comparator = (o1, o2) -> {
-			int result = o2.getViewer_count() - o1.getViewer_count();
-			return result;
-		};
-
-		StreamsDto streamsDto = api.searchLiveKoreanStreams(10);
-		streamsDto.getData().stream().sorted(comparator).forEach(v -> System.out.println(v.getViewer_count()));
-
-	}
-
 	@Test
 	public void 현재한국어로방송중인채널중_첫번째게임조회() {
 		TwitchApiUtil twitchApiUtil = new TwitchApiUtil();
@@ -161,8 +138,8 @@ public class TwitchApiConnectTest {
 	}
 
 	@Test
-	public void 풍월량() throws JsonProcessingException {
+	public void 특정스트리머조회_스트리머아이디() throws JsonProcessingException {
 		StreamsDto dto = api.searchLiveKoreanStreams();
-		log.info("풍월량: {}", mapper.writeValueAsString(dto.getData().stream().filter(streamer -> streamer.getUser_name().equals("풍월량")).collect(Collectors.toList())));
+
 	}
 }
