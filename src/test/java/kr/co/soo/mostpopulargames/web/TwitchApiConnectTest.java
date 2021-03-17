@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import kr.co.soo.mostpopulargames.api.TwitchApiCall;
 import kr.co.soo.mostpopulargames.api.TwitchApiCallImpl;
 import kr.co.soo.mostpopulargames.api.TwitchApiUtil;
+import kr.co.soo.mostpopulargames.web.dto.StreamsDto;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.springframework.http.*;

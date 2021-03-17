@@ -1,4 +1,4 @@
-package kr.co.soo.mostpopulargames.web;
+package kr.co.soo.mostpopulargames.web.dto;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -21,7 +21,7 @@ public class StreamsDto {
 
 	@Getter
 	@ToString
-	static final class StreamerDto{
+	public static final class StreamerDto{
 		private String game_id;
 		@Setter
 		private String game_name;

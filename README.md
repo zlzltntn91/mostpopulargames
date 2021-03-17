@@ -57,3 +57,9 @@
 
 - ci/cd 
   - jenkins	sonarqube
+  
+https://id.twitch.tv/oauth2/authorize
+?client_id=*************
+&redirect_uri=http://localhost
+&response_type=token
+&scope=analytics:read:games

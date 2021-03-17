@@ -1,4 +1,4 @@
-package kr.co.soo.mostpopulargames.web;
+package kr.co.soo.mostpopulargames.web.dto;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

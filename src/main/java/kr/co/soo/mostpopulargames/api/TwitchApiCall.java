@@ -1,6 +1,6 @@
 package kr.co.soo.mostpopulargames.api;
 
-import kr.co.soo.mostpopulargames.web.StreamsDto;
+import kr.co.soo.mostpopulargames.web.dto.StreamsDto;
 
 public interface TwitchApiCall {
 

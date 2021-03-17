@@ -1,5 +1,6 @@
 package kr.co.soo.mostpopulargames.web;
 
+import kr.co.soo.mostpopulargames.web.dto.HelloResponseDto;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

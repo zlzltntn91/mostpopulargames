@@ -1,6 +1,7 @@
 package kr.co.soo.mostpopulargames.web;
 
 import kr.co.soo.mostpopulargames.api.TwitchApiCall;
+import kr.co.soo.mostpopulargames.web.dto.StreamsDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

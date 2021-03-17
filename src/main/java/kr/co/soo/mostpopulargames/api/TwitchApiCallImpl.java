@@ -1,6 +1,6 @@
 package kr.co.soo.mostpopulargames.api;
 
-import kr.co.soo.mostpopulargames.web.StreamsDto;
+import kr.co.soo.mostpopulargames.web.dto.StreamsDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
