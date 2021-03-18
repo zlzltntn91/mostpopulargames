@@ -19,9 +19,7 @@ public class TwitchController {
 
 	private final TwitchApiCall api;
 
-	@GetMapping(value = {"/livestreams",
-			"/livestreams/{language}",
-			"/livestreams/{language}/{streamerId}"})
+	@GetMapping(value = {"/livestreams/{language}/{streamerId}"})
 	public ResponseEntity<StreamsDto> searchKoreaLiveStream(@PathVariable(required = false) String language,
 															@PathVariable(required = false) String streamerId) {
 
@@ -32,9 +30,8 @@ public class TwitchController {
 		if ("ko".equals(language)) {
 			result = api.searchLiveKoreanStreams(20);
 		}
-
+		log.info("몇번들어오냐?");
 		return new ResponseEntity<>(result, HttpStatus.OK);
-
 	}
 
 	@GetMapping("/games/ranking")
