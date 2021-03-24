@@ -1,11 +1,18 @@
 package kr.co.soo.mostpopulargames.api;
 
+import kr.co.soo.mostpopulargames.web.dto.GameDto;
 import kr.co.soo.mostpopulargames.web.dto.StreamsDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
+
 @Service
-public class TwitchApiCallImpl implements TwitchApiCall{
+public class TwitchApiCallImpl implements TwitchApiCall {
 
 	// FIXME: 2021/03/12 properties
 	private final String API_URL = "https://api.twitch.tv";
@@ -25,5 +32,35 @@ public class TwitchApiCallImpl implements TwitchApiCall{
 		String url = API_URL + SEARCH_CHANNEL + "?language=ko&first=" + size;
 		ResponseEntity<StreamsDto> responseEntity = twitchApiUtil.getResponseEntity(url, StreamsDto.class);
 		return responseEntity.getBody();
+	}
+
+	@Override
+	public List<GameDto> getGameRankingByViewerCount() throws IOException {
+		StreamsDto streamsDto = searchLiveKoreanStreams(100);
+
+		Map<String, Integer> groupingByGameName = streamsDto.getData().stream()
+				.collect(groupingBy(StreamsDto.StreamerDto::getGame_name,
+									summingInt(StreamsDto.StreamerDto::getViewer_count)));
+
+		Set<Map.Entry<String, Integer>> entrySet = groupingByGameName.entrySet();
+
+		List<GameDto> rankings = new ArrayList<>();
+
+		for (Map.Entry<String, Integer> stringIntegerEntry : entrySet) {
+			GameDto game = new GameDto();
+			game.setGame_name(stringIntegerEntry.getKey());
+			game.setViewer_count(stringIntegerEntry.getValue());
+			game.setStreamers(streamsDto.getData().stream()
+									  .filter(v -> v.getGame_name().equals(game.getGame_name()))
+									  .sorted(Comparator.comparingInt(StreamsDto.StreamerDto::getViewer_count).reversed())
+									  .collect(Collectors.toList()));
+			rankings.add(game);
+		}
+
+		List<GameDto> descByViewerCount = rankings.stream()
+				.sorted(Comparator.comparingInt(GameDto::getViewer_count).reversed())
+				.collect(toList());
+
+		return descByViewerCount;
 	}
 }

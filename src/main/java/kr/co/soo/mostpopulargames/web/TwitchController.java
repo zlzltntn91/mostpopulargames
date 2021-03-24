@@ -1,6 +1,7 @@
 package kr.co.soo.mostpopulargames.web;
 
 import kr.co.soo.mostpopulargames.api.TwitchApiCall;
+import kr.co.soo.mostpopulargames.web.dto.GameDto;
 import kr.co.soo.mostpopulargames.web.dto.StreamsDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -27,15 +30,13 @@ public class TwitchController {
 		language = Optional.ofNullable(language).orElse("ko");
 		streamerId = Optional.ofNullable(streamerId).orElse("");
 
-		if ("ko".equals(language)) {
-			result = api.searchLiveKoreanStreams(20);
-		}
-		log.info("몇번들어오냐?");
+		result = api.searchLiveKoreanStreams(100);
+
 		return new ResponseEntity<>(result, HttpStatus.OK);
 	}
 
 	@GetMapping("/games/ranking")
-	public String getRanking() {
-		return null;
+	public ResponseEntity<List<GameDto>> getRanking() throws IOException {
+		return new ResponseEntity<>(api.getGameRankingByViewerCount(), HttpStatus.OK);
 	}
 }

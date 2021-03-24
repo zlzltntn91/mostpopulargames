@@ -34,7 +34,7 @@ public class StreamsDto {
 		private String user_id;
 		private String user_login;
 		private String user_name;
-		private int viewer_count;
+		private int viewer_count;                     
 		private List<String> tag_ids;
 	}
 }

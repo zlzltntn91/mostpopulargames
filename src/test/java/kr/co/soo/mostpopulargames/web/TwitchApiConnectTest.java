@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import kr.co.soo.mostpopulargames.api.TwitchApiCall;
 import kr.co.soo.mostpopulargames.api.TwitchApiCallImpl;
 import kr.co.soo.mostpopulargames.api.TwitchApiUtil;
+import kr.co.soo.mostpopulargames.web.dto.GameDto;
 import kr.co.soo.mostpopulargames.web.dto.StreamsDto;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -13,9 +14,11 @@ import org.springframework.http.*;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @Slf4j
@@ -36,9 +39,9 @@ public class TwitchApiConnectTest {
 		httpHeaders.add("Authorization", "OAuth " + "s46yaix8pot0u4o40o2lt761ecyrb3");
 		HttpEntity<MultiValueMap<String, String>> httpEntity = new HttpEntity<>(httpHeaders);
 		ResponseEntity<String> responseEntity = restTemplate.exchange("https://id.twitch.tv/oauth2/validate",
-				HttpMethod.GET,
-				httpEntity,
-				String.class);
+																	  HttpMethod.GET,
+																	  httpEntity,
+																	  String.class);
 		assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
 		log.debug(responseEntity.getBody());
 	}
@@ -61,7 +64,7 @@ public class TwitchApiConnectTest {
 		assertThat(apiResult.getData().size()).isEqualTo(100);
 
 		Map<String, List<StreamsDto.StreamerDto>> groupByGameName = apiResult.getData().stream()
-				.collect(Collectors.groupingBy(StreamsDto.StreamerDto::getGame_name));
+				.collect(groupingBy(StreamsDto.StreamerDto::getGame_name));
 		assertThat(groupByGameName.keySet().size()).isNotZero();
 
 		int totalStreamerSize = groupByGameName.entrySet().stream()
@@ -77,22 +80,51 @@ public class TwitchApiConnectTest {
 	}
 
 	@Test
-	public void 현재한국어로방송중인채널_게임명으로그룹핑_시청자가많은순() throws JsonProcessingException {
+	public void 트위치총시청자() throws JsonProcessingException {
 		StreamsDto streamsDto = api.searchLiveKoreanStreams(100);
-		long totalViewer = streamsDto.getData().stream().collect(Collectors.summingInt(StreamsDto.StreamerDto::getViewer_count));
-		assertThat(totalViewer).isNotZero();
+
+		int gameNameMap = streamsDto.getData().stream()
+				.collect(Collectors.summingInt(v -> v.getViewer_count()));
+
+		log.info(mapper.writeValueAsString(gameNameMap));
+	}
+
+	@Test
+	public void 현재한국어로방송중인채널_게임명으로그룹핑_시청자가많은순() throws IOException {
+		StreamsDto streamsDto = api.searchLiveKoreanStreams(100);
 
 		Map<String, Integer> groupingByGameName = streamsDto.getData().stream()
-				.collect(Collectors.groupingBy(StreamsDto.StreamerDto::getGame_name, Collectors.summingInt(StreamsDto.StreamerDto::getViewer_count)));
+				.collect(groupingBy(StreamsDto.StreamerDto::getGame_name,
+									summingInt(StreamsDto.StreamerDto::getViewer_count)));
 
-		long groupTotalViewerCount = groupingByGameName.entrySet().stream().collect(Collectors.summingInt(v -> v.getValue()));
-		assertThat(totalViewer).isEqualTo(groupTotalViewerCount);
+		Set<Map.Entry<String, Integer>> entrySet = groupingByGameName.entrySet();
 
-		Comparator<Map.Entry<String, Integer>> totalViewerComparator = Comparator.comparingInt(Map.Entry::getValue);
+		List<GameDto> rankings = new ArrayList<>();
 
-		List<Map.Entry<String, Integer>> gameList_descTotalViewer = groupingByGameName.entrySet().stream()
-				.sorted(totalViewerComparator.reversed())
-				.collect(Collectors.toList());
+		for (Map.Entry<String, Integer> stringIntegerEntry : entrySet) {
+			GameDto game = new GameDto();
+			game.setGame_name(stringIntegerEntry.getKey());
+			game.setViewer_count(stringIntegerEntry.getValue());
+			game.setStreamers(streamsDto.getData().stream()
+								   .filter(v -> v.getGame_name().equals(game.getGame_name()))
+								   .sorted(Comparator.comparingInt(StreamsDto.StreamerDto::getViewer_count).reversed())
+								   .collect(Collectors.toList()));
+			rankings.add(game);
+		}
+
+		List<GameDto> descByViewerCount = rankings.stream()
+				.sorted(Comparator.comparingInt(GameDto::getViewer_count).reversed())
+				.collect(toList());
+
+		log.info(mapper.writeValueAsString(descByViewerCount));
+	}
+
+	@Test
+	public void 게임명으로박스아트조회() {
+		TwitchApiUtil apiUtil = new TwitchApiUtil();
+		ResponseEntity t = apiUtil.getResponseEntity("https://api.twitch.tv/helix/games?name=League of Legends",
+													 String.class);
+		log.info(t.getBody().toString());
 	}
 
 	@Test
@@ -109,7 +141,7 @@ public class TwitchApiConnectTest {
 					}
 					return v;
 				})
-				.collect(Collectors.groupingBy(StreamsDto.StreamerDto::getGame_name));
+				.collect(groupingBy(StreamsDto.StreamerDto::getGame_name));
 
 		// 엔트리셋으로 변환
 		Set<Map.Entry<String, List<StreamsDto.StreamerDto>>> entrySet = result.entrySet();
@@ -122,7 +154,7 @@ public class TwitchApiConnectTest {
 		// 스트리머가 많은순으로 정렬
 		Set<?> resultSet = countStreams.entrySet().stream()
 				.sorted((v1, v2) -> v2.getValue().compareTo(v1.getValue()))
-				.collect(Collectors.toCollection(LinkedHashSet::new));
+				.collect(toCollection(LinkedHashSet::new));
 
 		log.info(mapper.writeValueAsString(resultSet));
 	}
@@ -134,13 +166,9 @@ public class TwitchApiConnectTest {
 		assertThat(responseDto.getData().size()).isEqualTo(50);
 
 		String firstStreamsGameId = responseDto.getData().get(1).getGame_id();
-		ResponseEntity<String> result = twitchApiUtil.getResponseEntity(API_URL + "/games?id=" + firstStreamsGameId, String.class);
+		ResponseEntity<String> result = twitchApiUtil.getResponseEntity(API_URL + "/games?id=" + firstStreamsGameId,
+																		String.class);
 		log.info(result.getBody());
 	}
 
-	@Test
-	public void 특정스트리머조회_스트리머아이디() throws JsonProcessingException {
-		StreamsDto dto = api.searchLiveKoreanStreams();
-
-	}
 }
