@@ -4,9 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import kr.co.soo.mostpopulargames.api.TwitchApiCall;
-import kr.co.soo.mostpopulargames.api.TwitchApiCallImpl;
-import kr.co.soo.mostpopulargames.api.TwitchApiUtil;
-import kr.co.soo.mostpopulargames.web.dto.GameDto;
+import kr.co.soo.mostpopulargames.api.impl.TwitchApiCallImpl;
+import kr.co.soo.mostpopulargames.api.util.TwitchApiUtil;
+import kr.co.soo.mostpopulargames.web.dto.TwitchGameDto;
 import kr.co.soo.mostpopulargames.web.dto.StreamsDto;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -99,10 +99,10 @@ public class TwitchApiConnectTest {
 
 		Set<Map.Entry<String, Integer>> entrySet = groupingByGameName.entrySet();
 
-		List<GameDto> rankings = new ArrayList<>();
+		List<TwitchGameDto> rankings = new ArrayList<>();
 
 		for (Map.Entry<String, Integer> stringIntegerEntry : entrySet) {
-			GameDto game = new GameDto();
+			TwitchGameDto game = new TwitchGameDto();
 			game.setGame_name(stringIntegerEntry.getKey());
 			game.setViewer_count(stringIntegerEntry.getValue());
 			game.setStreamers(streamsDto.getData().stream()
@@ -112,8 +112,8 @@ public class TwitchApiConnectTest {
 			rankings.add(game);
 		}
 
-		List<GameDto> descByViewerCount = rankings.stream()
-				.sorted(Comparator.comparingInt(GameDto::getViewer_count).reversed())
+		List<TwitchGameDto> descByViewerCount = rankings.stream()
+				.sorted(Comparator.comparingInt(TwitchGameDto::getViewer_count).reversed())
 				.collect(toList());
 
 		log.info(mapper.writeValueAsString(descByViewerCount));

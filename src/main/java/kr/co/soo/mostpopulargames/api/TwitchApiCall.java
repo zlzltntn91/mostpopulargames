@@ -1,6 +1,6 @@
 package kr.co.soo.mostpopulargames.api;
 
-import kr.co.soo.mostpopulargames.web.dto.GameDto;
+import kr.co.soo.mostpopulargames.web.dto.TwitchGameDto;
 import kr.co.soo.mostpopulargames.web.dto.StreamsDto;
 
 import java.io.IOException;
@@ -10,5 +10,5 @@ public interface TwitchApiCall {
 
 	StreamsDto searchLiveKoreanStreams();
 	StreamsDto searchLiveKoreanStreams(int size);
-	List<GameDto> getGameRankingByViewerCount() throws IOException;
+	List<TwitchGameDto> getGameRankingByViewerCount() throws IOException;
 }

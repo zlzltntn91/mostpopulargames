@@ -1,7 +1,7 @@
 package kr.co.soo.mostpopulargames.web;
 
 import kr.co.soo.mostpopulargames.api.TwitchApiCall;
-import kr.co.soo.mostpopulargames.web.dto.GameDto;
+import kr.co.soo.mostpopulargames.web.dto.TwitchGameDto;
 import kr.co.soo.mostpopulargames.web.dto.StreamsDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +36,7 @@ public class TwitchController {
 	}
 
 	@GetMapping("/games/ranking")
-	public ResponseEntity<List<GameDto>> getRanking() throws IOException {
+	public ResponseEntity<List<TwitchGameDto>> getRanking() throws IOException {
 		return new ResponseEntity<>(api.getGameRankingByViewerCount(), HttpStatus.OK);
 	}
 }

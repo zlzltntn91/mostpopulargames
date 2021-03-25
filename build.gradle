@@ -10,12 +10,18 @@ buildscript{
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
 
     }
+
+}
+
+plugins{
+    id "com.moowork.node" version "1.3.1"
 }
 
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management' // 스프링 부트 의존성 관리 플러그인
+apply plugin: "com.moowork.node"
 
 group 'kr.co.soo'
 version '1.0-SNAPSHOT'
@@ -27,6 +33,25 @@ repositories {
     jcenter()
 }
 
+def webappDir = "$projectDir/frontend"
+
+task appNpmInstall(type: NpmTask) {
+    workingDir = file("${project.projectDir}/frontend")
+    args = ["install"]
+}
+
+task yarnBuild(type: NpmTask) {
+    workingDir = file("${project.projectDir}/frontend")
+    args = ["build"]
+}
+
+task copyWebApp(type: Copy) {
+    from "frontend/build"
+    into 'build/resources/main/static/.'
+}
+
+copyWebApp.dependsOn yarnBuild
+compileJava.dependsOn copyWebApp
 /**
  * 특정 버전을 명시하지 않아야 아래 설정을 따라감
  * org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}

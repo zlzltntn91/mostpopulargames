@@ -7,7 +7,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class GameDto {
+public class TwitchGameDto {
 	private String game_name;
 	private List<StreamsDto.StreamerDto> streamers;
 	private int viewer_count;

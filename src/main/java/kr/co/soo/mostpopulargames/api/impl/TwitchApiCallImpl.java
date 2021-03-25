@@ -1,6 +1,8 @@
-package kr.co.soo.mostpopulargames.api;
+package kr.co.soo.mostpopulargames.api.impl;
 
-import kr.co.soo.mostpopulargames.web.dto.GameDto;
+import kr.co.soo.mostpopulargames.api.TwitchApiCall;
+import kr.co.soo.mostpopulargames.api.util.TwitchApiUtil;
+import kr.co.soo.mostpopulargames.web.dto.TwitchGameDto;
 import kr.co.soo.mostpopulargames.web.dto.StreamsDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -35,7 +37,7 @@ public class TwitchApiCallImpl implements TwitchApiCall {
 	}
 
 	@Override
-	public List<GameDto> getGameRankingByViewerCount() throws IOException {
+	public List<TwitchGameDto> getGameRankingByViewerCount() {
 		StreamsDto streamsDto = searchLiveKoreanStreams(100);
 
 		Map<String, Integer> groupingByGameName = streamsDto.getData().stream()
@@ -44,10 +46,10 @@ public class TwitchApiCallImpl implements TwitchApiCall {
 
 		Set<Map.Entry<String, Integer>> entrySet = groupingByGameName.entrySet();
 
-		List<GameDto> rankings = new ArrayList<>();
+		List<TwitchGameDto> rankings = new ArrayList<>();
 
 		for (Map.Entry<String, Integer> stringIntegerEntry : entrySet) {
-			GameDto game = new GameDto();
+			TwitchGameDto game = new TwitchGameDto();
 			game.setGame_name(stringIntegerEntry.getKey());
 			game.setViewer_count(stringIntegerEntry.getValue());
 			game.setStreamers(streamsDto.getData().stream()
@@ -57,8 +59,8 @@ public class TwitchApiCallImpl implements TwitchApiCall {
 			rankings.add(game);
 		}
 
-		List<GameDto> descByViewerCount = rankings.stream()
-				.sorted(Comparator.comparingInt(GameDto::getViewer_count).reversed())
+		List<TwitchGameDto> descByViewerCount = rankings.stream()
+				.sorted(Comparator.comparingInt(TwitchGameDto::getViewer_count).reversed())
 				.collect(toList());
 
 		return descByViewerCount;

@@ -1,5 +1,6 @@
 package kr.co.soo.mostpopulargames.api;
 
+import kr.co.soo.mostpopulargames.api.util.TwitchApiUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.springframework.http.HttpHeaders;

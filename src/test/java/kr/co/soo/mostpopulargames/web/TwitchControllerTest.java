@@ -22,17 +22,17 @@ public class TwitchControllerTest {
 	private TestRestTemplate restTemplate;
 
 	@Test
-	public void 라이브스트림조회_기본ko_20() {
+	public void 라이브스트림조회_기본ko_100() {
 		ResponseEntity<StreamsDto> result = restTemplate.getForEntity("/livestreams", StreamsDto.class);
 		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		assertThat(result.getBody().getData().size())
-				.isEqualTo(20);
+				.isEqualTo(100);
 
 		assertThat(result.getBody().getData().stream()
 						   .filter(v -> "ko".equals(v.getLanguage()))
 						   .count())
-				.isEqualTo(20);
+				.isEqualTo(100);
 
 		assertThat(result.getBody().getData().stream()
 						   .filter(v -> !"ko".equals(v.getLanguage()))
@@ -40,10 +40,4 @@ public class TwitchControllerTest {
 				.isEqualTo(0);
 	}
 
-	@Test(expected = NullPointerException.class)
-	public void us라이브스트림조회_expected_NPP() {
-		ResponseEntity<StreamsDto> result = restTemplate.getForEntity("/livestreams/us", StreamsDto.class);
-		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(result.getBody().getData().size()).isEqualTo(0);
-	}
 }
